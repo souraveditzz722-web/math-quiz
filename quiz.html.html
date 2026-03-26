@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>MathMaster | Interactive Math Quiz</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(145deg, #f0f4fa 0%, #e2e8f0 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
+    }
+
+    /* main app container */
+    .quiz-container {
+      max-width: 850px;
+      width: 100%;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(2px);
+      border-radius: 2.5rem;
+      box-shadow: 0 25px 45px -12px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.05);
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+
+    /* header area */
+    .quiz-header {
+      background: white;
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .title-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    h1 {
+      font-size: 1.9rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #1F2B3C, #2C3E50);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: -0.3px;
+    }
+
+    .difficulty-badge {
+      background: #eef2ff;
+      padding: 0.35rem 1rem;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    /* difficulty selector card */
+    .difficulty-selector {
+      background: white;
+      padding: 2rem;
+      text-align: center;
+      border-radius: 2rem;
+      margin: 1.5rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    }
+
+    .difficulty-buttons {
+      display: flex;
+      gap: 1.2rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 1.8rem 0;
+    }
+
+    .diff-btn {
+      border: none;
+      padding: 0.9rem 1.8rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border-radius: 60px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      background: #f1f5f9;
+      color: #1e293b;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .diff-btn.beginner { background: #dcfce7; color: #166534; border-left: 4px solid #22c55e; }
+    .diff-btn.intermediate { background: #fff3e3; color: #9a3412; border-left: 4px solid #f97316; }
+    .diff-btn.advanced { background: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
+
+    .diff-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 20px -12px rgba(0,0,0,0.2);
+    }
+
+    /* quiz area (hidden until start) */
+    .quiz-area {
+      display: none;
+      padding: 2rem;
+    }
+
+    /* progress & stats */
+    .progress-section {
+      margin-bottom: 1.8rem;
+    }
+    .progress-track {
+      background: #e2e8f0;
+      border-radius: 30px;
+      height: 10px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: #3b82f6;
+      border-radius: 30px;
+      transition: width 0.3s ease;
+    }
+    .question-counter {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.6rem;
+      font-weight: 500;
+      color: #334155;
+    }
+
+    /* question card */
+    .question-card {
+      background: white;
+      border-radius: 2rem;
+      padding: 1.8rem;
+      margin: 1.5rem 0;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+    .question-text {
+      font-size: 1.7rem;
+      font-weight: 600;
+      line-height: 1.4;
+      color: #0f172a;
+      margin-bottom: 1.5rem;
+    }
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+    .option {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 1.2rem;
+      padding: 1rem 1.2rem;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #1e293b;
+    }
+    .option:hover {
+      background: #eef2ff;
+      border-color: #94a3b8;
+      transform: scale(0.99);
+    }
+    .option.disabled-opt {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+    .correct-highlight {
+      background: #bbf7d0 !important;
+      border-color: #22c55e !important;
+    }
+    .wrong-highlight {
+      background: #fecaca !important;
+      border-color: #ef4444 !important;
+    }
+
+    /* result screen */
+    .result-screen {
+      padding: 2rem;
+    }
+    .score-circle {
+      background: linear-gradient(145deg, #f1f5f9, #ffffff);
+      border-radius: 100px;
+      width: 140px;
+      height: 140px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .score-number {
+      font-size: 3rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .review-table {
+      max-height: 380px;
+      overflow-y: auto;
+      margin: 1.5rem 0;
+      border-radius: 1.2rem;
+      background: white;
+    }
+    .review-item {
+      padding: 1rem;
+      border-bottom: 1px solid #eef2ff;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .review-q {
+      flex: 2;
+      font-weight: 500;
+    }
+    .review-answers {
+      flex: 2;
+      display: flex;
+      gap: 1rem;
+      font-size: 0.9rem;
+    }
+    .restart-btn, .new-quiz-btn {
+      background: #1e293b;
+      border: none;
+      padding: 0.9rem 2rem;
+      border-radius: 50px;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: 0.2s;
+    }
+    .restart-btn:hover, .new-quiz-btn:hover {
+      background: #0f172a;
+      transform: scale(0.98);
+    }
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+    .timer-badge {
+      background: #f1f5f9;
+      padding: 0.3rem 0.8rem;
+      border-radius: 30px;
+      font-family: monospace;
+      font-weight: bold;
+    }
+    footer {
+      font-size: 0.75rem;
+      text-align: center;
+      padding: 1rem;
+      color: #475569;
+    }
+    @media (max-width: 640px) {
+      .quiz-container { margin: 0; }
+      .question-text { font-size: 1.3rem; }
+      .option { padding: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="quiz-container" id="appRoot">
+  <!-- dynamic render via JS -->
+</div>
+<script>
+  // ---------- MATH QUESTION BANK (100+ questions, 3 levels) ----------
+  const generateQuestionBank = () => {
+    const bank = [];
+
+    // Helper to push questions
+    function add(level, text, options, correct) {
+      bank.push({ text, options, correct, level });
+    }
+
+    // ---- BEGINNER (40+ questions) ----
+    const beginnerOps = [
+      { q: "12 + 8 = ?", opts: ["16", "20", "22", "18"], correct: "20" },
+      { q: "45 - 18 = ?", opts: ["27", "33", "25", "29"], correct: "27" },
+      { q: "7 × 6 = ?", opts: ["42", "36", "48", "40"], correct: "42" },
+      { q: "81 ÷ 9 = ?", opts: ["8", "7", "9", "10"], correct: "9" },
+      { q: "15% of 200 = ?", opts: ["25", "30", "20", "35"], correct: "30" },
+      { q: "3/4 + 1/4 = ?", opts: ["1", "1/2", "3/8", "1/4"], correct: "1" },
+      { q: "100 - 37 = ?", opts: ["63", "73", "67", "53"], correct: "63" },
+      { q: "24 ÷ 6 = ?", opts: ["4", "3", "6", "5"], correct: "4" },
+      { q: "9 × 9 = ?", opts: ["81", "72", "90", "99"], correct: "81" },
+      { q: "What is 50% of 80?", opts: ["40", "30", "50", "20"], correct: "40" },
+      { q: "14 + 22 = ?", opts: ["36", "38", "34", "40"], correct: "36" },
+      { q: "64 - 29 = ?", opts: ["35", "33", "45", "31"], correct: "35" },
+      { q: "11 × 5 = ?", opts: ["55", "50", "60", "45"], correct: "55" },
+      { q: "120 ÷ 12 = ?", opts: ["10", "12", "8", "15"], correct: "10" },
+      { q: "2/3 of 27 = ?", opts: ["18", "9", "12", "24"], correct: "18" },
+      { q: "7 + 3 × 4 = ?", opts: ["19", "40", "28", "31"], correct: "19" },
+      { q: "18 - 2 × 5 = ?", opts: ["8", "20", "16", "10"], correct: "8" },
+      { q: "What is the square root of 64?", opts: ["6", "7", "8", "9"], correct: "8" },
+      { q: "3 × (2 + 5) = ?", opts: ["21", "17", "13", "15"], correct: "21" },
+      { q: "0.5 × 100 = ?", opts: ["5", "50", "500", "0.05"], correct: "50" },
+      { q: "25 + 16 = ?", opts: ["41", "39", "43", "31"], correct: "41" },
+      { q: "72 ÷ 8 = ?", opts: ["9", "8", "7", "10"], correct: "9" },
+      { q: "8 × 7 = ?", opts: ["56", "48", "64", "54"], correct: "56" },
+      { q: "99 - 44 = ?", opts: ["55", "45", "65", "53"], correct: "55" },
+      { q: "1/2 + 1/3 = ?", opts: ["5/6", "2/5", "1/6", "3/5"], correct: "5/6" },
+      { q: "10% of 250 = ?", opts: ["25", "20", "15", "30"], correct: "25" }
+    ];
+    beginnerOps.forEach(q => add("beginner", q.q, q.opts, q.correct));
+    for(let i=0;i<15;i++) add("beginner", `Basic arithmetic: ${15+i} + ${7+i} = ?`, [`${22+2*i}`, `${23+2*i}`, `${20+2*i}`, `${25+2*i}`], `${22+2*i}`);
+    
+    // ---- INTERMEDIATE (35+ unique) ----
+    const interQuestions = [
+      { q: "Solve: 2x + 5 = 15", opts: ["x=5", "x=10", "x=4", "x=6"], correct: "x=5" },
+      { q: "If y = 3x - 2, find y when x = 4", opts: ["10", "12", "14", "8"], correct: "10" },
+      { q: "√144 = ?", opts: ["12", "14", "10", "16"], correct: "12" },
+      { q: "2³ × 2² = ?", opts: ["32", "64", "16", "8"], correct: "32" },
+      { q: "Area of rectangle: length 8, width 5", opts: ["40", "26", "30", "13"], correct: "40" },
+      { q: "Solve: 3(x - 4) = 18", opts: ["x=10", "x=6", "x=8", "x=12"], correct: "x=10" },
+      { q: "What is 15% of 300?", opts: ["45", "30", "60", "15"], correct: "45" },
+      { q: "Simplify: (2x²)(3x³)", opts: ["6x⁵", "5x⁶", "6x⁶", "5x⁵"], correct: "6x⁵" },
+      { q: "Perimeter of square side 7cm", opts: ["28cm", "14cm", "21cm", "49cm"], correct: "28cm" },
+      { q: "Solve inequality: 2x - 3 > 7", opts: ["x>5", "x<5", "x>2", "x>10"], correct: "x>5" },
+      { q: "4! = ?", opts: ["24", "12", "16", "20"], correct: "24" },
+      { q: "If a triangle has angles 50° and 60°, third angle?", opts: ["70°", "80°", "60°", "50°"], correct: "70°" },
+      { q: "Simplify: 5x + 3y - 2x + y", opts: ["3x+4y", "7x+2y", "3x+2y", "7x+4y"], correct: "3x+4y" },
+      { q: "Solve: (x+3)(x-2)=0", opts: ["x=-3,2", "x=3,-2", "x=3,2", "x=-3,-2"], correct: "x=-3,2" }
+    ];
+    interQuestions.forEach(q => add("intermediate", q.q, q.opts, q.correct));
+    for(let i=0;i<20;i++) add("intermediate", `Algebra: 4x - ${i+5} = ${2*i+10}`, [`x=${(2*i+10+i+5)/4}`, `x=${(2*i+10+i+5)/4+1}`, `x=${(2*i+10+i+5)/4-1}`, `x=${(2*i+10+i+5)/4+2}`], `x=${(2*i+10+i+5)/4}`);
+    
+    // ---- ADVANCED (30+ complex) ----
+    const advancedSet = [
+      { q: "Solve: x² - 5x + 6 = 0", opts: ["x=2,3", "x=1,6", "x=-2,-3", "x= -1,6"], correct: "x=2,3" },
+      { q: "If log₂(8) = x, find x", opts: ["3", "2", "4", "1"], correct: "3" },
+      { q: "Derivative of 3x² is?", opts: ["6x", "3x", "x²", "6"], correct: "6x" },
+      { q: "sin(90°) = ?", opts: ["1", "0", "-1", "0.5"], correct: "1" },
+      { q: "Solve quadratic: 2x² - 8x = 0", opts: ["x=0,4", "x=0,-4", "x=2,4", "x=2,-2"], correct: "x=0,4" },
+      { q: "What is the value of e^(ln 5)?", opts: ["5", "e", "ln5", "1"], correct: "5" },
+      { q: "Factor: x² - 9", opts: ["(x-3)(x+3)", "(x-9)(x+1)", "(x-3)²", "(x+3)²"], correct: "(x-3)(x+3)" },
+      { q: "If f(x)=2x+3, find f⁻¹(x)", opts: ["(x-3)/2", "2x-3", "x/2+3", "3-2x"], correct: "(x-3)/2" },
+      { q: "Solve: 3^(x) = 81", opts: ["x=4", "x=3", "x=5", "x=2"], correct: "x=4" },
+      { q: "Circle area formula with radius 3", opts: ["9π", "6π", "3π", "12π"], correct: "9π" },
+      { q: "cos(0°) = ?", opts: ["1", "0", "-1", "0.5"], correct: "1" },
+      { q: "Solve system: x+y=10, x-y=4", opts: ["x=7,y=3", "x=6,y=4", "x=8,y=2", "x=5,y=5"], correct: "x=7,y=3" }
+    ];
+    advancedSet.forEach(q => add("advanced", q.q, q.opts, q.correct));
+    for(let i=0;i<20;i++) add("advanced", `Quadratic: x² - ${6+i}x + ${8+i*2} = 0`, [`x=${(6+i- Math.sqrt((6+i)**2-4*(8+i*2)))/2},${(6+i+ Math.sqrt((6+i)**2-4*(8+i*2)))/2}`, "complex", "x=1,5", "x=2,4"], `x=${(6+i- Math.sqrt((6+i)**2-4*(8+i*2)))/2},${(6+i+ Math.sqrt((6+i)**2-4*(8+i*2)))/2}`);
+    
+    // ensure total > 100
+    while(bank.length < 110) add("beginner", `Extra: 100 - ${bank.length} = ?`, [`${100-bank.length}`, `${90-bank.length}`, `${110-bank.length}`, `${80-bank.length}`], `${100-bank.length}`);
+    return bank;
+  };
+
+  const FULL_QUESTION_SET = generateQuestionBank();
+
+  // Helper: get random N questions from level
+  function getRandomQuestions(level, count = 10) {
+    const filtered = FULL_QUESTION_SET.filter(q => q.level === level);
+    if(filtered.length === 0) return [];
+    const shuffled = [...filtered];
+    for(let i = shuffled.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled.slice(0, count);
+  }
+
+  // State
+  let currentQuiz = [];         // array of question objects
+  let currentIndex = 0;
+  let userAnswers = [];         // store { selected: string, isCorrect: boolean }
+  let score = 0;
+  let quizActive = false;
+  let selectedDifficulty = null;
+  let timerInterval = null;
+  let timeLeft = 30; // optional per-question timer
+  let timerEnabled = true; // bonus timer per question
+
+  // DOM elements
+  let appContainer;
+
+  // Render functions (full UI)
+  function render() {
+    if(!quizActive || !currentQuiz.length) {
+      renderDifficultySelector();
+    } else {
+      if(currentIndex < currentQuiz.length) {
+        renderActiveQuestion();
+      } else {
+        renderResults();
+      }
+    }
+  }
+
+  function renderDifficultySelector() {
+    appContainer.innerHTML = `
+      <div class="quiz-header">
+        <div class="title-section">
+          <h1>📐 MathMaster Quiz</h1>
+          <div class="difficulty-badge">100+ questions</div>
+        </div>
+      </div>
+      <div class="difficulty-selector">
+        <h2 style="margin-bottom:1rem;">🎯 Choose your challenge</h2>
+        <div class="difficulty-buttons">
+          <button class="diff-btn beginner" data-diff="beginner">🟢 Beginner</button>
+          <button class="diff-btn intermediate" data-diff="intermediate">🟡 Intermediate</button>
+          <button class="diff-btn advanced" data-diff="advanced">🔴 Advanced</button>
+        </div>
+        <p style="margin-top:1rem; color:#475569;">10 random questions · instant feedback · detailed review</p>
+        ${localStorage.getItem('lastScore') ? `<p style="margin-top:1rem;">🏆 Last score: ${localStorage.getItem('lastScore')}/10</p>` : ''}
+      </div>
+      <footer>⚡ Shuffled each attempt | localStorage keeps your recent score</footer>
+    `;
+    document.querySelectorAll('.diff-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const diff = btn.dataset.diff;
+        startQuiz(diff);
+      });
+    });
+  }
+
+  function startQuiz(diffLevel) {
+    selectedDifficulty = diffLevel;
+    currentQuiz = getRandomQuestions(diffLevel, 10);
+    if(currentQuiz.length < 10) return;
+    currentIndex = 0;
+    userAnswers = [];
+    score = 0;
+    quizActive = true;
+    if(timerInterval) clearInterval(timerInterval);
+    timeLeft = 30;
+    render();
+  }
+
+  function stopTimer() {
+    if(timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  }
+
+  function startTimerForQuestion() {
+    if(!timerEnabled) return;
+    stopTimer();
+    timeLeft = 30;
+    const timerSpan = document.getElementById('timerDisplay');
+    if(timerSpan) timerSpan.innerText = `⏱️ ${timeLeft}s`;
+    timerInterval = setInterval(() => {
+      if(!quizActive || currentIndex >= currentQuiz.length) { stopTimer(); return; }
+      if(timeLeft <= 1) {
+        // time's up: auto move with incorrect answer (no selection)
+        stopTimer();
+        const currentQ = currentQuiz[currentIndex];
+        const isCorrect = false;
+        userAnswers.push({ selected: "⏰ Timeout", isCorrect: false, correctAnswer: currentQ.correct, questionText: currentQ.text });
+        if(isCorrect) score++;
+        // move to next
+        currentIndex++;
+        if(currentIndex < currentQuiz.length) {
+          timeLeft = 30;
+          render();
+        } else {
+          render();
+        }
+      } else {
+        timeLeft--;
+        const timerSpan = document.getElementById('timerDisplay');
+        if(timerSpan) timerSpan.innerText = `⏱️ ${timeLeft}s`;
+        if(timeLeft <= 5) timerSpan.style.color = "#ef4444";
+        else timerSpan.style.color = "#334155";
+      }
+    }, 1000);
+  }
+
+  function renderActiveQuestion() {
+    const q = currentQuiz[currentIndex];
+    if(!q) return;
+    const progressPercent = ((currentIndex) / currentQuiz.length) * 100;
+    const difficultyColor = selectedDifficulty === 'beginner' ? '#22c55e' : (selectedDifficulty === 'intermediate' ? '#f97316' : '#ef4444');
+    appContainer.innerHTML = `
+      <div class="quiz-header">
+        <div class="title-section"><h1>Math Quiz</h1><div class="difficulty-badge" style="background:${difficultyColor}20; color:${difficultyColor}">${selectedDifficulty.toUpperCase()}</div></div>
+        <div class="progress-section">
+          <div class="question-counter"><span>Question ${currentIndex+1}/${currentQuiz.length}</span><span id="timerDisplay" class="timer-badge">⏱️ 30s</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:${progressPercent}%; background:${difficultyColor};"></div></div>
+        </div>
+      </div>
+      <div class="quiz-area" style="display:block;">
+        <div class="question-card">
+          <div class="question-text">${escapeHtml(q.text)}</div>
+          <div class="options-list" id="optionsContainer">
+            ${q.options.map((opt, idx) => `<div class="option" data-opt="${escapeHtml(opt)}">${String.fromCharCode(65+idx)}. ${escapeHtml(opt)}</div>`).join('')}
+          </div>
+        </div>
+        <div class="action-buttons"><button class="restart-btn" id="restartMidQuiz">⟳ Restart Quiz</button></div>
+      </div>
+      <footer>✔️ Click option → auto next question</footer>
+    `;
+    startTimerForQuestion();
+    const optionsDivs = document.querySelectorAll('.option');
+    optionsDivs.forEach(optDiv => {
+      optDiv.addEventListener('click', (e) => {
+        if(!quizActive) return;
+        const selectedAnswer = optDiv.dataset.opt;
+        const currentQ = currentQuiz[currentIndex];
+        const isAnsCorrect = (selectedAnswer === currentQ.correct);
+        if(isAnsCorrect) score++;
+        userAnswers.push({
+          selected: selectedAnswer,
+          isCorrect: isAnsCorrect,
+          correctAnswer: currentQ.correct,
+          questionText: currentQ.text
+        });
+        stopTimer();
+        // move to next question after short visual feedback
+        optDiv.style.transition = "0.1s";
+        if(isAnsCorrect) optDiv.classList.add('correct-highlight');
+        else {
+          optDiv.classList.add('wrong-highlight');
+          // highlight correct answer optionally for learning? show briefly
+          const allOptions = document.querySelectorAll('.option');
+          allOptions.forEach(opt => { if(opt.dataset.opt === currentQ.correct) opt.classList.add('correct-highlight'); });
+        }
+        setTimeout(() => {
+          currentIndex++;
+          if(currentIndex < currentQuiz.length) {
+            render();
+          } else {
+            render();
+          }
+        }, 500);
+      });
+    });
+    document.getElementById('restartMidQuiz')?.addEventListener('click', () => { stopTimer(); quizActive=false; render(); });
+  }
+
+  function renderResults() {
+    stopTimer();
+    const finalScore = score;
+    localStorage.setItem('lastScore', `${finalScore}/${currentQuiz.length}`);
+    let reviewHtml = `<div class="result-screen"><div class="score-circle"><div class="score-number">${finalScore}/${currentQuiz.length}</div><div>⭐ Score</div></div>`;
+    reviewHtml += `<div class="review-table">`;
+    userAnswers.forEach((ans, idx) => {
+      const isCorrect = ans.isCorrect;
+      const statusIcon = isCorrect ? '✅' : '❌';
+      reviewHtml += `
+        <div class="review-item" style="background:${isCorrect ? '#f0fdf4' : '#fef2f2'}">
+          <div class="review-q"><strong>Q${idx+1}:</strong> ${escapeHtml(ans.questionText)}</div>
+          <div class="review-answers">
+            <span>🧑‍🎓 Your: ${escapeHtml(ans.selected)}</span>
+            <span>✔️ Correct: ${escapeHtml(ans.correctAnswer)}</span>
+            <span>${statusIcon}</span>
+          </div>
+        </div>
+      `;
+    });
+    reviewHtml += `</div><div class="action-buttons"><button class="new-quiz-btn" id="newQuizBtn">🎯 New Quiz</button><button class="restart-btn" id="retrySameDiff">🔄 Retry Same Level</button></div></div>`;
+    appContainer.innerHTML = reviewHtml;
+    document.getElementById('newQuizBtn')?.addEventListener('click', () => { quizActive=false; render(); });
+    document.getElementById('retrySameDiff')?.addEventListener('click', () => { if(selectedDifficulty) startQuiz(selectedDifficulty); });
+  }
+
+  function escapeHtml(str) { return String(str).replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+  // init
+  window.onload = () => {
+    appContainer = document.getElementById('appRoot');
+    render();
+  };
+</script>
+</body>
+</html>
